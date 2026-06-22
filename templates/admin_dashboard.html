@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard | SLMS{% endblock %}
+{% block topbar_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header reveal">
+    <h1>Welcome back, {{ request.user.username }} 👋</h1>
+    <p>Here's a live overview of your leave management system.</p>
+</div>
+
+<!-- STATS GRID -->
+<div class="stats-grid">
+    <div class="stat-card reveal reveal-delay-1">
+        <div class="stat-icon slate">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">Total Requests</div>
+            <div class="stat-value" data-target="{{ total_leaves|default:0 }}">0</div>
+        </div>
+    </div>
+
+    <div class="stat-card reveal reveal-delay-2">
+        <div class="stat-icon amber">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value" data-target="{{ pending_leaves|default:0 }}">0</div>
+        </div>
+    </div>
+
+    <div class="stat-card reveal reveal-delay-3">
+        <div class="stat-icon green">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">Approved</div>
+            <div class="stat-value" data-target="{{ approved_leaves|default:0 }}">0</div>
+        </div>
+    </div>
+
+    <div class="stat-card reveal reveal-delay-4">
+        <div class="stat-icon red">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">Rejected</div>
+            <div class="stat-value" data-target="{{ rejected_leaves|default:0 }}">0</div>
+        </div>
+    </div>
+</div>
+
+<!-- CHART SECTION -->
+{% if total_leaves and total_leaves > 0 %}
+<div class="chart-section reveal">
+    <div class="chart-card">
+        <h3>Leave Status Distribution</h3>
+        <div style="display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;">
+            <div style="position:relative;width:160px;height:160px;flex-shrink:0;">
+                <canvas id="leaveChart"></canvas>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+                    <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.8rem;font-weight:800;color:var(--text-primary);">{{ total_leaves }}</span>
+                    <span style="font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Total</span>
+                </div>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#f59e0b;"></div>
+                    <span>Pending</span>
+                    <span class="legend-count">{{ pending_leaves|default:0 }}</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#16a34a;"></div>
+                    <span>Approved</span>
+                    <span class="legend-count">{{ approved_leaves|default:0 }}</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#ef4444;"></div>
+                    <span>Rejected</span>
+                    <span class="legend-count">{{ rejected_leaves|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <h3>Approval Rate</h3>
+        {% if total_leaves > 0 %}
+        <div style="text-align:center;padding:16px 0;">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:3rem;font-weight:800;color:var(--green-700);" id="approvalRate">0%</div>
+            <div style="font-size:0.84rem;color:var(--text-muted);margin-top:4px;">of all requests approved</div>
+            <!-- Progress bar -->
+            <div style="margin:20px 0;background:var(--border-light);border-radius:999px;height:10px;overflow:hidden;">
+                <div id="approvalBar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#16a34a,#22c55e);width:0%;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;text-align:left;">
+                <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;">
+                    <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Pending Rate</div>
+                    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;color:#b45309;">{{ pending_leaves|default:0 }}/{{ total_leaves }}</div>
+                </div>
+                <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;">
+                    <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Rejected Rate</div>
+                    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;color:#b91c1c;">{{ rejected_leaves|default:0 }}/{{ total_leaves }}</div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state"><p>No data yet.</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- QUICK ACTIONS -->
+<div class="page-header reveal" style="margin-top:8px;">
+    <h1 style="font-size:1.2rem;">Quick Actions</h1>
+</div>
+<div class="action-cards">
+    <a href="{% url 'view_leaves' %}" class="action-card reveal reveal-delay-1">
+        <div class="action-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <h3>Leave Requests</h3>
+        <p>Review all staff leave applications and take action on pending requests.</p>
+        <div class="action-card-link">Open &rarr;</div>
+    </a>
+
+    <a href="{% url 'manage_staff' %}" class="action-card reveal reveal-delay-2">
+        <div class="action-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <h3>Manage Staff</h3>
+        <p>Add, edit or remove staff member accounts and manage their access.</p>
+        <div class="action-card-link">Manage &rarr;</div>
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    /* ---- Animated stat counters ---- */
+    document.querySelectorAll('.stat-value[data-target]').forEach(function(el) {
+        var target = parseInt(el.dataset.target) || 0;
+        if (target === 0) { el.textContent = '0'; return; }
+        var current = 0;
+        var step    = Math.max(1, Math.ceil(target / 40));
+        var timer   = setInterval(function() {
+            current = Math.min(current + step, target);
+            el.textContent = current;
+            if (current >= target) clearInterval(timer);
+        }, 30);
+    });
+
+    /* ---- Donut chart ---- */
+    var chartCanvas = document.getElementById('leaveChart');
+    if (chartCanvas) {
+        new Chart(chartCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Approved', 'Rejected'],
+                datasets: [{
+                    data: [{{ pending_leaves|default:0 }}, {{ approved_leaves|default:0 }}, {{ rejected_leaves|default:0 }}],
+                    backgroundColor: ['#f59e0b', '#16a34a', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                cutout: '72%',
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed; } } } },
+                animation: { animateRotate: true, duration: 900 }
+            }
+        });
+    }
+
+    /* ---- Approval rate bar ---- */
+    var total    = {{ total_leaves|default:0 }};
+    var approved = {{ approved_leaves|default:0 }};
+    if (total > 0) {
+        var pct = Math.round((approved / total) * 100);
+        var rateEl = document.getElementById('approvalRate');
+        var barEl  = document.getElementById('approvalBar');
+        if (rateEl) {
+            var c = 0;
+            var t = setInterval(function() {
+                c = Math.min(c + 2, pct);
+                rateEl.textContent = c + '%';
+                if (c >= pct) clearInterval(t);
+            }, 25);
+        }
+        if (barEl) setTimeout(function() { barEl.style.width = pct + '%'; }, 400);
+    }
+</script>
+{% endblock %}

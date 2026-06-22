@@ -1,0 +1,389 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLMS | Staff Leave Management System</title>
+    <meta name="description" content="Staff Leave Management System — Manage, apply and track leave requests efficiently.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green-800: #166534;
+            --green-700: #15803d;
+            --green-600: #16a34a;
+            --green-500: #22c55e;
+            --green-100: #dcfce7;
+            --green-50:  #f0fdf4;
+            --text-primary: #0f1a0c;
+            --text-muted:   #6b8563;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-font-smoothing: antialiased; }
+
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* ---- HERO SECTION ---- */
+        .hero {
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: url("{% static 'images/hero_bg.png' %}") center/cover no-repeat;
+            z-index: 0;
+        }
+
+        .hero-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                120deg,
+                rgba(22, 101, 52, 0.82) 0%,
+                rgba(15, 26, 12, 0.65) 50%,
+                rgba(22, 163, 74, 0.40) 100%
+            );
+            z-index: 1;
+        }
+
+        /* ---- NAV ---- */
+        .home-nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 48px;
+        }
+
+        .home-nav-brand {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.03em;
+        }
+
+        .home-nav-links { display: flex; gap: 12px; }
+
+        .btn-nav {
+            padding: 9px 22px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-nav-outline {
+            border: 1.5px solid rgba(255,255,255,0.65);
+            color: #fff;
+            background: transparent;
+        }
+
+        .btn-nav-outline:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .btn-nav-solid {
+            background: #fff;
+            color: var(--green-800);
+            border: 1.5px solid #fff;
+        }
+
+        .btn-nav-solid:hover {
+            background: var(--green-50);
+            color: var(--green-800);
+        }
+
+        /* ---- HERO CONTENT ---- */
+        .hero-body {
+            position: relative;
+            z-index: 5;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 48px;
+        }
+
+        .hero-text { max-width: 580px; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 22px;
+            backdrop-filter: blur(6px);
+        }
+
+        .hero-badge span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green-500);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.4; }
+        }
+
+        .hero-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            color: #fff;
+            margin-bottom: 18px;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-title span {
+            color: var(--green-500);
+        }
+
+        .hero-sub {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.7;
+            margin-bottom: 32px;
+            font-weight: 400;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            padding: 13px 30px;
+            background: #fff;
+            color: var(--green-800);
+            border-radius: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.96rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.22s;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            background: var(--green-50);
+            color: var(--green-800);
+        }
+
+        .btn-hero-secondary {
+            padding: 13px 30px;
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.96rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.22s;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: #fff;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* ---- FEATURES STRIP ---- */
+        .features-strip {
+            background: #fff;
+            padding: 60px 48px;
+        }
+
+        .features-strip h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .features-strip .sub {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #f8faf7;
+            border: 1px solid #e3ede0;
+            border-radius: 14px;
+            padding: 24px;
+            transition: box-shadow 0.22s, transform 0.22s;
+        }
+
+        .feature-card:hover {
+            box-shadow: 0 8px 24px rgba(22,101,52,0.10);
+            transform: translateY(-3px);
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--green-50);
+            border: 1px solid var(--green-100);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green-700);
+            margin-bottom: 14px;
+        }
+
+        .feature-icon svg { width: 22px; height: 22px; }
+
+        .feature-card h3 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        /* ---- FOOTER ---- */
+        .home-footer {
+            background: var(--green-800);
+            color: rgba(255,255,255,0.65);
+            text-align: center;
+            padding: 20px 24px;
+            font-size: 0.84rem;
+        }
+
+        @media (max-width: 640px) {
+            .home-nav { padding: 18px 20px; }
+            .hero-body { padding: 28px 20px; }
+            .features-strip { padding: 40px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-bg-overlay"></div>
+
+    <nav class="home-nav">
+        <div class="home-nav-brand">
+            <svg style="display:inline;vertical-align:-4px;margin-right:6px;width:22px;height:22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            SLMS
+        </div>
+        <div class="home-nav-links">
+            <a href="{% url 'login' %}" class="btn-nav btn-nav-outline">Login</a>
+            <a href="{% url 'register' %}" class="btn-nav btn-nav-solid">Get Started</a>
+        </div>
+    </nav>
+
+    <div class="hero-body">
+        <div class="hero-text">
+            <div class="hero-badge">
+                <span></span>
+                Dhee Coding Lab
+            </div>
+            <h1 class="hero-title">
+                Streamline Your<br><span>Leave Management</span>
+            </h1>
+            <p class="hero-sub">
+                A modern, role-based system for staff to apply for leave and for admins to approve requests — all in one clean platform.
+            </p>
+            <div class="hero-cta">
+                <a href="{% url 'login' %}" class="btn-hero-primary">Sign In to Portal</a>
+                <a href="{% url 'register' %}" class="btn-hero-secondary">Create Account →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features-strip">
+    <h2>Everything You Need</h2>
+    <p class="sub">Built for teams that value clarity and efficiency</p>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </div>
+            <h3>Apply for Leave</h3>
+            <p>Staff can submit leave applications with type, dates and reason in seconds.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3>Approve & Reject</h3>
+            <p>Admins review and action leave requests with one click.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h3>Staff Management</h3>
+            <p>Add, edit or remove staff members with role-based access control.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <h3>Track Status</h3>
+            <p>Staff can track the real-time status of all their leave applications.</p>
+        </div>
+    </div>
+</section>
+
+<footer class="home-footer">
+    &copy; 2026 Dhee Coding Lab (DCL) &mdash; All rights reserved.
+</footer>
+
+</body>
+</html>

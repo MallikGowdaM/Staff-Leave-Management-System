@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Staff | SLMS{% endblock %}
+{% block topbar_title %}Staff Members{% endblock %}
+
+{% block content %}
+<a href="{% url 'admin_dashboard' %}" class="back-link">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Back to Dashboard
+</a>
+
+<div class="page-header">
+    <h1>Staff Members</h1>
+    <p>Manage your team — add, edit or remove staff accounts.</p>
+</div>
+
+<div class="toolbar">
+    <div class="search-bar">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="staffSearch" placeholder="Search by username...">
+    </div>
+    <a href="{% url 'add_staff' %}" class="btn btn-primary">
+        <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add Staff Member
+    </a>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="staffTableBody">
+            {% for i in staff_list %}
+            <tr class="staff-row" data-username="{{ i.username|lower }}">
+                <td style="color:var(--text-muted);font-size:0.82rem;">{{ forloop.counter }}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:34px;height:34px;border-radius:50%;background:var(--green-50);border:1px solid var(--green-100);display:flex;align-items:center;justify-content:center;font-size:0.82rem;font-weight:700;color:var(--green-700);">
+                            {{ i.username|first|upper }}
+                        </div>
+                        <span style="font-weight:600;">{{ i.username }}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-approved">Staff</span>
+                </td>
+                <td style="text-align:right;">
+                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                        <a href="{% url 'edit_staff' i.id %}" class="btn btn-ghost btn-sm">
+                            <svg style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            Edit
+                        </a>
+                        {# Pass both the delete URL and the username to the modal #}
+                        <button type="button" class="btn btn-danger btn-sm"
+                            onclick="showDeleteModal('{% url 'delete_staff' i.id %}', '{{ i.username }}')">
+                            <svg style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">
+                    <div class="empty-state">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <p>No staff members found. Add your first staff member.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="noResults" style="display:none;text-align:center;padding:36px;color:var(--text-muted);font-size:0.9rem;">
+    No staff members match your search.
+</div>
+
+<!-- ==========================================
+     DELETE CONFIRMATION MODAL (inline)
+     ========================================== -->
+<div id="staffDeleteOverlay" style="
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.40);
+    z-index:2000;
+    align-items:center;
+    justify-content:center;">
+
+    <div id="staffDeleteModal" style="
+        background:#fff;
+        border-radius:18px;
+        padding:32px;
+        max-width:400px;
+        width:90%;
+        box-shadow:0 20px 60px rgba(0,0,0,0.18);
+        transform:scale(0.92);
+        transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        position:relative;">
+
+        <!-- Warning icon -->
+        <div style="width:52px;height:52px;border-radius:50%;background:#fef2f2;border:2px solid #fecaca;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:#dc2626;">
+            <svg style="width:26px;height:26px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:800;text-align:center;margin-bottom:10px;color:#0f1a0c;">
+            Delete Staff Member?
+        </h3>
+
+        <p style="font-size:0.9rem;color:#6b8563;text-align:center;line-height:1.6;margin-bottom:8px;">
+            You are about to delete
+        </p>
+
+        <div id="deleteTargetName" style="
+            background:#fef2f2;
+            border:1px solid #fecaca;
+            border-radius:8px;
+            padding:10px 16px;
+            text-align:center;
+            font-family:'Plus Jakarta Sans',sans-serif;
+            font-weight:700;
+            font-size:1rem;
+            color:#b91c1c;
+            margin-bottom:14px;">
+        </div>
+
+        <p style="font-size:0.84rem;color:#6b8563;text-align:center;margin-bottom:24px;">
+            This action <strong style="color:#b91c1c;">cannot be undone.</strong> All their leave records will also be permanently deleted.
+        </p>
+
+        <div style="display:flex;gap:10px;">
+            <button type="button" id="cancelDeleteBtn"
+                style="flex:1;padding:11px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.9rem;cursor:pointer;background:#f0f4ee;border:1px solid #dde8d8;color:#3d5a38;transition:background 0.2s;"
+                onmouseover="this.style.background='#dde8d8'"
+                onmouseout="this.style.background='#f0f4ee'"
+                onclick="hideDeleteModal()">
+                No, Cancel
+            </button>
+            <a id="confirmDeleteBtn" href="#"
+                style="flex:1;padding:11px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;background:#dc2626;border:none;color:#fff;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.2s;"
+                onmouseover="this.style.background='#b91c1c'"
+                onmouseout="this.style.background='#dc2626'">
+                <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Yes, Delete
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    /* ---- Search ---- */
+    const staffRows = document.querySelectorAll('.staff-row');
+    const noRes     = document.getElementById('noResults');
+
+    document.getElementById('staffSearch').addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        let visible = 0;
+        staffRows.forEach(row => {
+            const match = !query || row.dataset.username.includes(query);
+            row.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        noRes.style.display = (visible === 0 && staffRows.length > 0) ? 'block' : 'none';
+    });
+
+    /* ---- Delete Modal ---- */
+    const overlay = document.getElementById('staffDeleteOverlay');
+    const modal   = document.getElementById('staffDeleteModal');
+
+    function showDeleteModal(url, username) {
+        document.getElementById('confirmDeleteBtn').href = url;
+        document.getElementById('deleteTargetName').textContent = username;
+        overlay.style.display = 'flex';
+        // Trigger scale animation
+        setTimeout(() => { modal.style.transform = 'scale(1)'; }, 10);
+    }
+
+    function hideDeleteModal() {
+        modal.style.transform = 'scale(0.92)';
+        setTimeout(() => { overlay.style.display = 'none'; }, 220);
+    }
+
+    // Close on backdrop click
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) hideDeleteModal();
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && overlay.style.display === 'flex') hideDeleteModal();
+    });
+</script>
+{% endblock %}

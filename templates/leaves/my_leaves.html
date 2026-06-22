@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}My Leave Applications | SLMS{% endblock %}
+{% block topbar_title %}My Applications{% endblock %}
+
+{% block content %}
+<a href="{% url 'staff_dashboard' %}" class="back-link">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Back to Dashboard
+</a>
+
+<div class="page-header">
+    <h1>My Leave Applications</h1>
+    <p>Track the status of all your submitted leave requests.</p>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+    <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="Pending">Pending</button>
+        <button class="filter-tab" data-filter="Approved">Approved</button>
+        <button class="filter-tab" data-filter="Rejected">Rejected</button>
+    </div>
+    <div class="search-bar">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by leave type...">
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Leave Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Reason</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="leaveTableBody">
+            {% for i in leaves %}
+            <tr class="leave-row" data-status="{{ i.status }}" data-type="{{ i.leave_type }}">
+                <td style="color:var(--text-muted);font-size:0.82rem;">{{ forloop.counter }}</td>
+                <td style="font-weight:600;">{{ i.leave_type }}</td>
+                <td>{{ i.start_date }}</td>
+                <td>{{ i.end_date }}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ i.reason }}">{{ i.reason }}</td>
+                <td>
+                    {% if i.status == 'Pending' %}
+                        <span class="badge badge-pending">
+                            <svg style="width:10px;height:10px;" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
+                            Pending
+                        </span>
+                    {% elif i.status == 'Approved' %}
+                        <span class="badge badge-approved">
+                            <svg style="width:10px;height:10px;" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
+                            Approved
+                        </span>
+                    {% else %}
+                        <span class="badge badge-rejected">
+                            <svg style="width:10px;height:10px;" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
+                            Rejected
+                        </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr id="emptyRow">
+                <td colspan="6">
+                    <div class="empty-state">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        <p>You haven't submitted any leave applications yet.</p>
+                        <a href="{% url 'apply_leave' %}" class="btn btn-primary btn-sm" style="margin-top:14px;">Apply for Leave</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- No results row (JS controlled) -->
+<div id="noResults" style="display:none;text-align:center;padding:36px;color:var(--text-muted);font-size:0.9rem;">
+    No applications match your filter.
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const rows   = document.querySelectorAll('.leave-row');
+    const search = document.getElementById('searchInput');
+    const tabs   = document.querySelectorAll('.filter-tab');
+    const noRes  = document.getElementById('noResults');
+    let activeFilter = 'all';
+
+    function applyFilters() {
+        const query = search.value.toLowerCase().trim();
+        let visible = 0;
+        rows.forEach(row => {
+            const status = row.dataset.status;
+            const type   = row.dataset.type.toLowerCase();
+            const filterOk = activeFilter === 'all' || status === activeFilter;
+            const searchOk = !query || type.includes(query);
+            const show = filterOk && searchOk;
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        noRes.style.display = (visible === 0 && rows.length > 0) ? 'block' : 'none';
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            activeFilter = tab.dataset.filter;
+            applyFilters();
+        });
+    });
+
+    search.addEventListener('input', applyFilters);
+</script>
+{% endblock %}

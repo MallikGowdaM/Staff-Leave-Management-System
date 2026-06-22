@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for Leave | SLMS{% endblock %}
+{% block topbar_title %}Apply for Leave{% endblock %}
+
+{% block content %}
+<a href="{% url 'staff_dashboard' %}" class="back-link">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Back to Dashboard
+</a>
+
+<div style="max-width:560px;">
+    <div class="page-header">
+        <h1>Apply for Leave</h1>
+        <p>Fill in the details below to submit your leave application.</p>
+    </div>
+
+    <div class="card card-lg">
+        <form method="POST" id="leaveForm">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" for="leave_type">Leave Type</label>
+                <select name="leave_type" id="leave_type" class="form-control" required>
+                    <option value="">— Select leave type —</option>
+                    <option value="Casual Leave">Casual Leave</option>
+                    <option value="Sick Leave">Sick Leave</option>
+                    <option value="Emergency Leave">Emergency Leave</option>
+                </select>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="start">Start Date</label>
+                    <input type="date" name="start" id="start" class="form-control" required onchange="calcDuration()">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="end">End Date</label>
+                    <input type="date" name="end" id="end" class="form-control" required onchange="calcDuration()">
+                </div>
+            </div>
+
+            <!-- Duration display -->
+            <div class="duration-box" id="durationBox" style="display:none;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span id="durationText">0 days</span>
+            </div>
+
+            <div class="form-group" style="margin-top:18px;">
+                <label class="form-label" for="reason">Reason for Leave</label>
+                <textarea name="reason" id="reason" class="form-control" rows="4" placeholder="Briefly describe your reason..." required></textarea>
+                <div class="form-hint">Be specific to help the admin make a quick decision.</div>
+            </div>
+
+            <div id="dateError" style="display:none;font-size:0.82rem;color:#b91c1c;margin-bottom:12px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+                ⚠ End date must be on or after the start date.
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">
+                <div class="spinner" id="spinner" style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none;"></div>
+                <span class="btn-text">Submit Application</span>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .duration-box { animation: fadeUp 0.25s ease; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+</style>
+<script>
+    /* Set min date to today */
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('start').min = today;
+    document.getElementById('end').min = today;
+
+    function calcDuration() {
+        const s = document.getElementById('start').value;
+        const e = document.getElementById('end').value;
+        const box = document.getElementById('durationBox');
+        const errBox = document.getElementById('dateError');
+
+        if (!s || !e) { box.style.display = 'none'; return; }
+
+        const start = new Date(s);
+        const end   = new Date(e);
+        const diff  = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+        if (diff < 1) {
+            box.style.display = 'none';
+            errBox.style.display = 'block';
+            return;
+        }
+
+        errBox.style.display = 'none';
+        box.style.display = 'flex';
+        document.getElementById('durationText').textContent =
+            `${diff} day${diff !== 1 ? 's' : ''} of leave (${start.toLocaleDateString('en-IN', {day:'numeric',month:'short'})} – ${end.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})})`;
+    }
+
+    document.getElementById('leaveForm').addEventListener('submit', function(e) {
+        const s = document.getElementById('start').value;
+        const ev = document.getElementById('end').value;
+        if (s && ev && new Date(ev) < new Date(s)) {
+            e.preventDefault();
+            document.getElementById('dateError').style.display = 'block';
+            return;
+        }
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        document.getElementById('spinner').style.display = 'block';
+    });
+</script>
+{% endblock %}
